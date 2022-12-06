@@ -76,8 +76,6 @@ class EditMovieModalContent extends Component {
       tags
     } = item;
 
-    console.log(qualityProfileIds);
-
     return (
       <ModalContent onModalClose={onModalClose}>
         <ModalHeader>
