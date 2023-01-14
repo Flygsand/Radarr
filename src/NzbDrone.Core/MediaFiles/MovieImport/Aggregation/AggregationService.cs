@@ -8,6 +8,7 @@ using NzbDrone.Core.Download;
 using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Qualities;
 
 namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation
 {
@@ -56,7 +57,14 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation
 
             if (isMediaFile && (!localMovie.ExistingFile || _configService.EnableMediaInfo))
             {
-                localMovie.MediaInfo = _videoFileInfoReader.GetMediaInfo(localMovie.Path);
+                if (localMovie.Quality.Quality == Quality.BRDISK)
+                {
+                    localMovie.MediaInfo = _videoFileInfoReader.GetMediaInfo(new Uri("bluray:" + localMovie.Path));
+                }
+                else
+                {
+                    localMovie.MediaInfo = _videoFileInfoReader.GetMediaInfo(localMovie.Path);
+                }
             }
 
             foreach (var augmenter in _augmenters)

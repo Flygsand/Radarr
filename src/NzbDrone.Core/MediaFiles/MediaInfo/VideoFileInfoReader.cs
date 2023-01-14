@@ -12,7 +12,9 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
     public interface IVideoFileInfoReader
     {
         MediaInfoModel GetMediaInfo(string filename);
+        MediaInfoModel GetMediaInfo(Uri uri);
         TimeSpan? GetRunTime(string filename);
+        TimeSpan? GetRunTime(Uri uri);
     }
 
     public class VideoFileInfoReader : IVideoFileInfoReader
@@ -50,22 +52,27 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
         public MediaInfoModel GetMediaInfo(string filename)
         {
-            if (!_diskProvider.FileExists(filename))
+            return GetMediaInfo(new Uri(Path.GetFullPath(filename)));
+        }
+
+        public MediaInfoModel GetMediaInfo(Uri uri)
+        {
+            if (!_diskProvider.FileExists(uri.LocalPath))
             {
-                throw new FileNotFoundException("Media file does not exist: " + filename);
+                throw new FileNotFoundException("Media file does not exist: " + uri.LocalPath);
             }
 
             // TODO: Cache media info by path, mtime and length so we don't need to read files multiple times
             try
             {
-                _logger.Debug("Getting media info from {0}", filename);
-                var ffprobeOutput = FFProbe.GetStreamJson(filename, ffOptions: new FFOptions { ExtraArguments = "-probesize 50000000" });
+                _logger.Debug("Getting media info from {0}", uri.LocalPath);
+                var ffprobeOutput = FFProbe.GetStreamJson(uri, ffOptions: new FFOptions { ExtraArguments = "-probesize 50000000" });
 
                 var analysis = FFProbe.AnalyseStreamJson(ffprobeOutput);
 
                 if (analysis.PrimaryAudioStream?.ChannelLayout.IsNullOrWhiteSpace() ?? true)
                 {
-                    ffprobeOutput = FFProbe.GetStreamJson(filename, ffOptions: new FFOptions { ExtraArguments = "-probesize 150000000 -analyzeduration 150000000" });
+                    ffprobeOutput = FFProbe.GetStreamJson(uri, ffOptions: new FFOptions { ExtraArguments = "-probesize 150000000 -analyzeduration 150000000" });
                     analysis = FFProbe.AnalyseStreamJson(ffprobeOutput);
                 }
 
@@ -106,7 +113,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
                 // if it looks like PQ10 or similar HDR, do a frame analysis to figure out which type it is
                 if (PqTransferFunctions.Contains(mediaInfoModel.VideoTransferCharacteristics))
                 {
-                    var frameOutput = FFProbe.GetFrameJson(filename, ffOptions: new () { ExtraArguments = "-read_intervals \"%+#1\" -select_streams v" });
+                    var frameOutput = FFProbe.GetFrameJson(uri, ffOptions: new () { ExtraArguments = "-read_intervals \"%+#1\" -select_streams v" });
                     mediaInfoModel.RawFrameData = frameOutput;
 
                     frames = FFProbe.AnalyseFrameJson(frameOutput);
@@ -122,7 +129,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "Unable to parse media info from file: {0}", filename);
+                _logger.Error(ex, "Unable to parse media info from file: {0}", uri.LocalPath);
             }
 
             return null;
@@ -130,7 +137,12 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
         public TimeSpan? GetRunTime(string filename)
         {
-            var info = GetMediaInfo(filename);
+            return GetRunTime(new Uri(Path.GetFullPath(filename)));
+        }
+
+        public TimeSpan? GetRunTime(Uri uri)
+        {
+            var info = GetMediaInfo(uri);
 
             return info?.RunTime;
         }

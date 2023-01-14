@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Linq;
 using NLog;
@@ -75,7 +76,15 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
                 return false;
             }
 
-            var updatedMediaInfo = _videoFileInfoReader.GetMediaInfo(path);
+            MediaInfoModel updatedMediaInfo;
+            if (movieFile.Quality.Quality == Qualities.Quality.BRDISK)
+            {
+                updatedMediaInfo = _videoFileInfoReader.GetMediaInfo(new Uri("bluray:" + path));
+            }
+            else
+            {
+                updatedMediaInfo = _videoFileInfoReader.GetMediaInfo(path);
+            }
 
             if (updatedMediaInfo == null)
             {

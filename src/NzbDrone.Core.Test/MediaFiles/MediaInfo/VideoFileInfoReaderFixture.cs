@@ -39,6 +39,16 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
         }
 
         [Test]
+        public void get_runtime_bluray()
+        {
+            var uri = new Uri("bluray:" + Path.Combine(TestContext.CurrentContext.TestDirectory, "Files", "Media", "brdisk.iso"));
+
+            var runtime = Subject.GetRunTime(uri).Value;
+            runtime.Minutes.Should().Be(3);
+            runtime.Seconds.Should().Be(0);
+        }
+
+        [Test]
         public void get_info()
         {
             var path = Path.Combine(TestContext.CurrentContext.TestDirectory, "Files", "Media", "H264_sample.mp4");
@@ -65,6 +75,33 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
             info.VideoBitDepth.Should().Be(8);
             info.VideoColourPrimaries.Should().Be("smpte170m");
             info.VideoTransferCharacteristics.Should().Be("bt709");
+        }
+
+        [Test]
+        public void get_info_bluray()
+        {
+            var uri = new Uri("bluray:" + Path.Combine(TestContext.CurrentContext.TestDirectory, "Files", "Media", "brdisk.iso"));
+
+            var info = Subject.GetMediaInfo(uri);
+            info.VideoFormat.Should().Be("h264");
+            info.VideoCodecID.Should().Be("x264");
+            info.VideoProfile.Should().Be("High");
+            info.AudioFormat.Should().Be("ac3");
+            info.AudioCodecID.Should().Be("AC-3");
+            info.AudioBitrate.Should().Be(32000);
+            info.AudioChannels.Should().Be(1);
+            info.AudioChannelPositions.Should().Be("mono");
+            info.AudioLanguages.Should().BeEmpty();
+            info.Height.Should().Be(480);
+            info.RunTime.Minutes.Should().Be(3);
+            info.RunTime.Seconds.Should().Be(0);
+            info.ScanType.Should().Be("Progressive");
+            info.Subtitles.Should().BeEmpty();
+            info.VideoFps.Should().Be(30000 / 1001m);
+            info.Width.Should().Be(720);
+            info.VideoBitDepth.Should().Be(8);
+            info.VideoColourPrimaries.Should().Be("smpte170m");
+            info.VideoTransferCharacteristics.Should().Be("smpte170m");
         }
 
         [Test]
